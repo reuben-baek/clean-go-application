@@ -10,4 +10,5 @@ func TestAccount(t *testing.T) {
 	var reuben *domain.Account
 	reuben = domain.NewAccount("reuben")
 	assert.Equal(t, "reuben", reuben.Id())
+	// p := reuben.id //  compile error : Unexported field 'id' usage
 }
