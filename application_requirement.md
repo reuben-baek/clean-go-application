@@ -1,4 +1,6 @@
-# Simple Web Object Storage
+# Application Requirement
+
+## Simple Web Object Storage
 
 account, container, object 를 서비스하는 간단한 web object storage 를 만들어 보자. account 는 container 들을 가질 수 있다. container 는 하부 container 를 가질 수 없고 object 들을 가진다. container name 은 '/' 를 포함하면 안된다. object name 은 '/' 를 포함한 path 형태로 표현된다.
 
