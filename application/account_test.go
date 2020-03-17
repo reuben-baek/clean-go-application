@@ -31,6 +31,15 @@ func TestAccountApplication_Find(t *testing.T) {
 	accountRepository.AssertExpectations(t)
 }
 
+func TestAccountApplication_Save(t *testing.T) {
+	accountRepository := &mockAccountRepository{}
+	accountApp := NewAccountApplication(accountRepository)
+
+	bob := NewAccount("bob")
+	err := accountApp.Save(bob)
+	assert.Nil(t, err)
+}
+
 type mockAccountRepository struct {
 	mock.Mock
 }

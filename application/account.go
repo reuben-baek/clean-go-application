@@ -14,12 +14,20 @@ func (app *AccountApplication) Find(id string) (*Account, error) {
 	return AccountFrom(account), nil
 }
 
+func (app *AccountApplication) Save(account *Account) error {
+	return app.accountRepository.Save(account.To())
+}
+
 func NewAccountApplication(accountRepository domain.AccountRepository) *AccountApplication {
 	return &AccountApplication{accountRepository: accountRepository}
 }
 
 type Account struct {
 	id string
+}
+
+func (a *Account) To() *domain.Account {
+	return domain.NewAccount(a.id)
 }
 
 func NewAccount(id string) *Account {
