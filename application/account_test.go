@@ -1,6 +1,7 @@
 package application
 
 import (
+	"errors"
 	"github.com/reuben-baek/clean-go-application/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -9,35 +10,45 @@ import (
 
 func TestAccountApplication_Find(t *testing.T) {
 	accountRepository := &mockAccountRepository{}
-	accountApp := NewAccountApplication(accountRepository)
 
 	accountRepository.On("Find", "reuben").Return(domain.NewAccount("reuben"), nil)
 	accountRepository.On("Find", "jimmy").Return(nil, domain.NewNotFoundError("cannot find", nil))
 
-	t.Run("find account", func(t *testing.T) {
+	accountApp := NewAccountApplication(accountRepository)
+
+	t.Run("found", func(t *testing.T) {
 		reuben, err := accountApp.Find("reuben")
 		expected := NewAccount("reuben")
 		assert.Nil(t, err)
 		assert.Equal(t, expected, reuben)
 	})
 
-	t.Run("cannot find account", func(t *testing.T) {
+	t.Run("not found error", func(t *testing.T) {
 		jimmy, err := accountApp.Find("jimmy")
 		expected := domain.NewNotFoundError("cannot find", nil)
 		assert.IsType(t, expected, err)
 		assert.Nil(t, jimmy)
 	})
-
-	accountRepository.AssertExpectations(t)
 }
 
 func TestAccountApplication_Save(t *testing.T) {
 	accountRepository := &mockAccountRepository{}
+
+	accountRepository.On("Save", domain.NewAccount("bob")).Return(nil)
+	accountRepository.On("Save", domain.NewAccount("ted")).Return(errors.New("unexpected error"))
 	accountApp := NewAccountApplication(accountRepository)
 
-	bob := NewAccount("bob")
-	err := accountApp.Save(bob)
-	assert.Nil(t, err)
+	t.Run("success", func(t *testing.T) {
+		bob := NewAccount("bob")
+		err := accountApp.Save(bob)
+		assert.Nil(t, err)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		ted := NewAccount("ted")
+		err := accountApp.Save(ted)
+		assert.NotNil(t, err)
+	})
 }
 
 type mockAccountRepository struct {
@@ -54,5 +65,6 @@ func (r *mockAccountRepository) Find(id string) (*domain.Account, error) {
 }
 
 func (r *mockAccountRepository) Save(account *domain.Account) error {
-	panic("implement me")
+	args := r.Called(account)
+	return args.Error(0)
 }
