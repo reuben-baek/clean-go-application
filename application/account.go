@@ -8,7 +8,10 @@ type AccountApplication struct {
 
 func (app *AccountApplication) Find(id string) (*Account, error) {
 	account, err := app.accountRepository.Find(id)
-	return AccountFrom(account), err
+	if err != nil {
+		return nil, err
+	}
+	return AccountFrom(account), nil
 }
 
 func NewAccountApplication(accountRepository domain.AccountRepository) *AccountApplication {
