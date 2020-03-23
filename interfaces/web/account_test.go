@@ -1,31 +1,33 @@
 package web
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/reuben-baek/clean-go-application/application"
-	"github.com/reuben-baek/clean-go-application/domain"
 	"github.com/reuben-baek/clean-go-application/infrastructure/inmemory"
 	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-func TestAccountRouter(t *testing.T) {
+func TestAccountRouter_Put_Get(t *testing.T) {
+	engine := gin.Default()
 	accountRepository := inmemory.NewAccountRepository()
 	accountApp := application.NewAccountApplication(accountRepository)
 	accountRouter := NewAccountRouter(accountApp)
-
-	reuben := domain.NewAccount("reuben")
-	accountRepository.Save(reuben)
-
-	router := RootRouter(gin.Default())
-	router.Handle(accountRouter)
+	rootRouter := newRootRouter(engine, accountRouter)
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/reuben", nil)
-	router.ServeHTTP(w, req)
+	req := httptest.NewRequest("PUT", "/reuben", nil)
+	rootRouter.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Result().StatusCode)
 
-	expected := fmt.Sprintf("Hello, %+v", reuben)
-	assert.Equal(t, expected, w.Body.String())
+	w = httptest.NewRecorder()
+	req = httptest.NewRequest("GET", "/reuben", nil)
+	rootRouter.ServeHTTP(w, req)
+
+	reuben := application.NewAccount("reuben")
+	expected, _ := json.Marshal(reuben)
+	assert.Equal(t, string(expected), strings.TrimSpace(w.Body.String()))
 }

@@ -23,15 +23,15 @@ func NewAccountApplication(accountRepository domain.AccountRepository) *AccountA
 }
 
 type Account struct {
-	id string
+	Id string
 }
 
 func (a *Account) To() *domain.Account {
-	return domain.NewAccount(a.id)
+	return domain.NewAccount(a.Id)
 }
 
 func NewAccount(id string) *Account {
-	return &Account{id: id}
+	return &Account{Id: id}
 }
 
 func AccountFrom(account *domain.Account) *Account {

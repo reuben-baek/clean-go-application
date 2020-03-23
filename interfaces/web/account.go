@@ -15,14 +15,25 @@ func NewAccountRouter(app *application.AccountApplication) *AccountRouter {
 	return h
 }
 
-func (h *AccountRouter) Routes() []Route {
-	return []Route{
-		{"GET", "/:id", []gin.HandlerFunc{h.get}},
+func (h *AccountRouter) Routes() []route {
+	return []route{
+		Route("GET", "/:id", h.get),
+		Route("PUT", "/:id", h.put),
 	}
 }
 
 func (h *AccountRouter) get(ctx *gin.Context) {
 	id := ctx.Param("id")
 	account, _ := h.app.Find(id)
-	ctx.String(200, fmt.Sprintf("Hello, %+v", account))
+	ctx.JSON(200, account)
+}
+
+func (h *AccountRouter) put(ctx *gin.Context) {
+	id := ctx.Param("id")
+	err := h.app.Save(application.NewAccount(id))
+	if err != nil {
+		ctx.String(500, fmt.Sprintf("Internal Error. %v", err))
+	} else {
+		ctx.Status(200)
+	}
 }

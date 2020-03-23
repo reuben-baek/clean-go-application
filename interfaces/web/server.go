@@ -2,21 +2,22 @@ package web
 
 import (
 	"golang.org/x/sys/unix"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 )
 
 type server struct {
-	rootRouter
+	*rootRouter
 	address string
 }
 
-func Server(router rootRouter, address string) *server {
+func Server(router *rootRouter, address string) *server {
 	return &server{router, address}
 }
 
-func (s *server) start(done chan<- bool) {
+func (s *server) Start() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, unix.SIGTERM)
 
@@ -26,9 +27,8 @@ func (s *server) start(done chan<- bool) {
 			Handler: s.rootRouter,
 		}
 
-		httpServer.ListenAndServe()
+		log.Fatal(httpServer.ListenAndServe())
 	}()
 
 	<-signalChan
-	done <- true
 }
