@@ -14,7 +14,7 @@ func TestAccountApplication_Find(t *testing.T) {
 	accountRepository.On("Find", "reuben").Return(domain.NewAccount("reuben"), nil)
 	accountRepository.On("Find", "jimmy").Return(nil, domain.NewNotFoundError("cannot find", nil))
 
-	accountApp := NewAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository)
 
 	t.Run("found", func(t *testing.T) {
 		reuben, err := accountApp.Find("reuben")
@@ -36,7 +36,7 @@ func TestAccountApplication_Save(t *testing.T) {
 
 	accountRepository.On("Save", domain.NewAccount("bob")).Return(nil)
 	accountRepository.On("Save", domain.NewAccount("ted")).Return(errors.New("unexpected error"))
-	accountApp := NewAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository)
 
 	t.Run("success", func(t *testing.T) {
 		bob := NewAccount("bob")

@@ -5,14 +5,15 @@ import (
 	"github.com/reuben-baek/clean-go-application/application"
 	"github.com/reuben-baek/clean-go-application/infrastructure/inmemory"
 	"github.com/reuben-baek/clean-go-application/interfaces/web"
+	"github.com/reuben-baek/clean-go-application/lib/webserver"
 )
 
 func init() {
 	accountRepository := inmemory.NewAccountRepository()
-	accountApp := application.NewAccountApplication(accountRepository)
+	accountApp := application.NewDefaultAccountApplication(accountRepository)
 	accountRouter := web.NewAccountRouter(accountApp)
-	web.RootRouter.Handle(accountRouter)
+	webserver.Handle(accountRouter)
 
 	engine := gin.Default()
-	web.RootRouter.Init(engine)
+	webserver.Init(engine)
 }

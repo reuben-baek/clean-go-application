@@ -1,15 +1,41 @@
-package web
+package webserver
 
 import "github.com/gin-gonic/gin"
 
+type Router interface {
+	Routes() []Route
+}
+
+type Route struct {
+	method   string
+	path     string
+	handlers []gin.HandlerFunc
+}
+
+func NewRoute(method string, path string, handlers ...gin.HandlerFunc) Route {
+	return Route{
+		method,
+		path,
+		handlers,
+	}
+}
+
 var RootRouter = &rootRouter{}
+
+func Init(engine *gin.Engine) {
+	RootRouter.Init(engine)
+}
+
+func Handle(r Router) {
+	RootRouter.Handle(r)
+}
 
 type rootRouter struct {
 	*gin.Engine
 	routers []Router
 }
 
-func newRootRouter(engine *gin.Engine, routers ...Router) *rootRouter {
+func NewRootRouter(engine *gin.Engine, routers ...Router) *rootRouter {
 	r := &rootRouter{routers: routers}
 	r.Init(engine)
 	return r
@@ -30,22 +56,4 @@ func (g *rootRouter) setRoutes() {
 
 func (g *rootRouter) Handle(r Router) {
 	g.routers = append(g.routers, r)
-}
-
-type route struct {
-	method   string
-	path     string
-	handlers []gin.HandlerFunc
-}
-
-func Route(method string, path string, handlers ...gin.HandlerFunc) route {
-	return route{
-		method,
-		path,
-		handlers,
-	}
-}
-
-type Router interface {
-	Routes() []route
 }

@@ -1,4 +1,4 @@
-package web
+package webserver
 
 import (
 	"golang.org/x/sys/unix"

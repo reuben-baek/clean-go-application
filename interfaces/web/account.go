@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/reuben-baek/clean-go-application/application"
+	"github.com/reuben-baek/clean-go-application/lib/webserver"
 )
 
 type AccountRouter struct {
-	app *application.AccountApplication
+	app application.AccountApplication
 }
 
-func NewAccountRouter(app *application.AccountApplication) *AccountRouter {
+func NewAccountRouter(app application.AccountApplication) *AccountRouter {
 	h := &AccountRouter{app}
 	return h
 }
 
-func (h *AccountRouter) Routes() []route {
-	return []route{
-		Route("GET", "/:id", h.get),
-		Route("PUT", "/:id", h.put),
+func (h *AccountRouter) Routes() []webserver.Route {
+	return []webserver.Route{
+		webserver.NewRoute("GET", "/:id", h.get),
+		webserver.NewRoute("PUT", "/:id", h.put),
 	}
 }
 

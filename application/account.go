@@ -2,11 +2,20 @@ package application
 
 import "github.com/reuben-baek/clean-go-application/domain"
 
-type AccountApplication struct {
+type AccountApplication interface {
+	Find(id string) (*Account, error)
+	Save(account *Account) error
+}
+
+type DefaultAccountApplication struct {
 	accountRepository domain.AccountRepository
 }
 
-func (app *AccountApplication) Find(id string) (*Account, error) {
+func NewDefaultAccountApplication(accountRepository domain.AccountRepository) *DefaultAccountApplication {
+	return &DefaultAccountApplication{accountRepository: accountRepository}
+}
+
+func (app *DefaultAccountApplication) Find(id string) (*Account, error) {
 	account, err := app.accountRepository.Find(id)
 	if err != nil {
 		return nil, err
@@ -14,12 +23,8 @@ func (app *AccountApplication) Find(id string) (*Account, error) {
 	return AccountFrom(account), nil
 }
 
-func (app *AccountApplication) Save(account *Account) error {
+func (app *DefaultAccountApplication) Save(account *Account) error {
 	return app.accountRepository.Save(account.To())
-}
-
-func NewAccountApplication(accountRepository domain.AccountRepository) *AccountApplication {
-	return &AccountApplication{accountRepository: accountRepository}
 }
 
 type Account struct {
