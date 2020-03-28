@@ -1,8 +1,12 @@
 # Domain Definition
 
-account 도메인 모델을 정의하자. account 는 object storage 의 소유자이다. 일단 id 필드만 정의한다. 
+Simple Object Storage 어플리케이션 요구사항에서 도메인 모델을 정의 해 보자. 일단 account, container, object 가 필요해 보인다.
 
-[account.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/account.go)
+## Account
+
+account 는 object storage 의 소유자이다. 일단, 속성으로 id 필드만 정의한다. 
+
+[domain/account.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/account.go)
 
 ```go
 type Account struct {
@@ -18,11 +22,13 @@ func (a *Account) Id() string {
 }
 ```
 
-NewAccount 는 Account 생성자 이다. struct type composite literal ( `Account{id: id}` ) 을 이용할 수 도 있지만, 필드나 생성 로직이 추가되는 경우 컴파일 단계에서 코드를 수정하고 오류를 해결할 수 있도록 생성자를 사용하는 것이 강건한 코드를 유지하는데 도움이 된다.
+Account 의 속성 필드명을 외부 패키지에서 참조 가능한 Id 가 아니라 id 로 만든것에 주목하자. 이렇게 하면, 외부 패키지에서  struct type composite literal 을 이용해서 id 값을 지정한 Account 객체를 만들수 없다. ```Account{id: "reuen"}``` 은 컴파일 오류가 발생한다. 또, ```Account{}```로 객체를 만들어도 Account.id 값을 지정할 수 없다. 즉, NewAccount 생성자를 사용해야만 id 값을 지정할 수 있다.
 
-Id() 는 Account.id 의 Getter 이다. id 필드명이 소문자로 시작하므로 외부에 Setter 가 열려있지 않다. id 는 한번 생성되면 불변이므로 Setter 를 오픈하지 않는다. account_test.go 를 보자. package 를 domain_test 로 해서 외부에서 Account 를 사용하도록 했다. id 필드는 노출되어 있지 않으므로 컴파일 오류가 발생한다. 
+그럼, Account type 도 굳이 외부 패키지에 오픈할 이유는 없지 않을까? 즉, ```Account{}``` 와 같이 composite literal 로 객체를 만들 수 없도록 강제하려면 type 명을 ```type account struct{}``` 소문자로 시작하게 하면 된다. 그러나, type 은 composite literal 에서만 사용되는게 아니라 ```var reuben Account``` 와 같이 type 선언 및 type casting ``` v.(*Account)``` 에도 필요하다. 외부 패키지에서 이와 같이 사용하려면 type 명을 대문자로 시작하게 해서 외부 패키지에 오픈해야 한다. 그래서, 실용적인 선택으로 여기서는 타입명은 대문자로 시작해서 외부에 오픈하고, 속성은 소문자로 시작해서 외부에 오픈하지 않고 Getter method 를 오픈하도록 하겠다. 외부에 오픈되지 않다는 것은 Setter 가 열려져 있지 않다는 의미이다. 필요한 경우 SetId(id string) 과 같이 Setter 를 정의하겠지만, 꼭 필요한 경우에 한정해서 사용하겠다. id 는 한번 생성되면 불변이므로 Setter 를 오픈하지 않는다. 
 
-[account_test.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/account_test.go)
+account_test.go 를 보자. package 를 domain_test 로 해서 외부에서 Account 를 사용하도록 했다. id 필드는 노출되어 있지 않으므로 사용하려면 컴파일 오류가 발생한다. 
+
+[domain/account_test.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/account_test.go)
 
 ```go
 package domain_test
@@ -41,16 +47,58 @@ func TestAccount(t *testing.T) {
 }
 ```
 
-assert library 로 go community 에서 가장 많이 사용하는 github.com/stretchr/testify 를 추가했다. 이 프로젝트에서는 go module 을 사용한다. 
+assert library 로 go community 에서 가장 많이 사용하는 github.com/stretchr/testify 를 추가했다. 외부 모듈 관리 방법으로 이 프로젝트에서는 go module 을 사용한다.
 
 ```
 go mod init github.com/reuben-baek/clean-go-application
 go get github.com/stretchr/testify
 ```
 
+struct type composite liternal 대신 생성자를 사용함으로서 얻는 큰 이익이 있다. 속성, 생성 로직에 변경이 발생하는 경우 컴파일 단계에서 코드를 수정하고 오류를 해결할 수 있다. Account type 에 name 속성을 추가하고 NewAccount 생성자를 변경해보자.
+
+```go
+type Account struct {
+	id string
+	name string
+}
+
+func NewAccount(id string, name string) *Account {
+	return &Account{id: id}
+}
+```
+
+NewAccount 를 사용한 기존 코드는 컴파일 오류가 발생한다. 코드를 실행하려면, 변경된 NewAccount 에 맞게 모두 코드를 수정해야 한다.
+
+```go
+reuben = domain.NewAccount("reuben")
+```
+
+반면, type compisite literal 을 이용해 객체를 생성한 아래 코드는 컴파일 오류가 발생하지 않는다. 지금 단계에서는 별 의미가 없을 수도 있지만 runtime 에 문제가 발생할 가능성이 매우 높아진다.
+
+```go
+func TestAccount_NewWithLiteral(t *testing.T) {
+	reuben := &domain.Account{}
+	assert.Equal(t, "", reuben.Id())
+}
+```
+
+
+
+## Container
+
+
+
+
+
+## Object
+
+
+
+## AccountRepository
+
 이제 account 객체를 저장하는 AccountRepository 를 정의한다. AccountRepository 는 db, filesystem 등 다양한 형태로 구현될 수 있으므로 interface 로 정의한다. 구현체들은 infrastructure layer 에서 다른 패키지로 존재하게 된다.
 
-[repository.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/repository.go)
+[domain/repository.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/repository.go)
 
 ```go
 type AccountRepository interface {
@@ -82,4 +130,15 @@ func (n *NotFoundError) Unwrap() error {
 
 Find 메소드는 id 로 Account 를 찾지 못하는 경우에 NotFoundError 를 리턴한다. 구현체에 따라 NotFoundError 유발 오류가 다를 수 있어서 NewNotFoundError 생성자로 error 를 받도록 했다. AccountRepository 와 관련있는 에러이기 때문에 같은 소스(repository.go)에 정의한다. 
 
-Account 도메인 모델 정의는 일단 끝났다. 다음 단계는 application layer 또는 infrastructure layer 로 이동한다. 어느 layer 나 먼저 진행해도 되고 동시에 진행해도 된다. application layer 와 infrastructure layer 는 서로 의존성이 없기 때문이다. 둘다 domain layer 에만 의존성을 가지고 있다. infrastructure layer 를 먼저 구현하면 application layer 구현시점에 테스트 코드를 infrastructure layer 에 의존하도록 할 가능성이 높기 때문에 ( Mocking 이 귀찮거나 모르거나 ) 여기서는 application layer 구현에 대해서 먼저 진행하겠다. ( 사실, 실제 코드 구현은 infrastructure layer 를 먼저했다. 안좋은 습관이긴 한데, 의존성 없도록 application layer 구현할 테니 상관은 없다. )
+
+
+## ContainerRepository
+
+
+
+## ObjectRepository
+
+
+
+도메인 모델 정의는 일단 끝났다. 다음 단계는 application layer 또는 infrastructure layer 구현이다. 어느 layer 나 먼저 진행해도 되고 동시에 진행 ( 팀 멤버가 두명 이상이라면 ) 해도 된다. application layer 와 infrastructure layer 는 서로 의존성이 없기 때문이다. 둘다 domain layer 에만 의존성을 가지고 있다. infrastructure layer 를 먼저 구현하면 application layer 구현시점에 테스트 코드를 infrastructure layer 에 의존하도록 할 가능성이 높기 때문에 ( Mocking 이 귀찮거나 모르거나 ) 여기서는 application layer 구현에 대해서 먼저 진행하겠다. ( 사실, 실제 코드 구현은 infrastructure layer 를 먼저했다. 안좋은 습관이긴 한데, 의존성 없도록 application layer 구현할 테니 상관은 없다. )
+
