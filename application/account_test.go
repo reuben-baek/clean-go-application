@@ -1,6 +1,7 @@
-package application
+package application_test
 
 import (
+	"github.com/reuben-baek/clean-go-application/application"
 	"github.com/reuben-baek/clean-go-application/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -9,11 +10,11 @@ import (
 
 func TestAccountApplication_Find(t *testing.T) {
 	accountRepository := &AccountRepository{}
-	accountApp := NewAccountApplication(accountRepository)
+	accountApp := application.NewAccountApplication(accountRepository)
 
 	t.Run("find account", func(t *testing.T) {
 		reuben, err := accountApp.Find("reuben")
-		expected := NewAccount("reuben")
+		expected := application.NewAccount("reuben")
 		assert.Nil(t, err)
 		assert.Equal(t, expected, reuben)
 	})
@@ -35,5 +36,9 @@ func (a *AccountRepository) Find(id string) (*domain.Account, error) {
 }
 
 func (a *AccountRepository) Save(account *domain.Account) error {
+	panic("implement me")
+}
+
+func (r *AccountRepository) Delete(account *domain.Account) error {
 	panic("implement me")
 }
