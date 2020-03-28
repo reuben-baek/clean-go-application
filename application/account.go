@@ -5,6 +5,7 @@ import "github.com/reuben-baek/clean-go-application/domain"
 type AccountApplication interface {
 	Find(id string) (*Account, error)
 	Save(account *Account) error
+	Delete(id string) error
 }
 
 type DefaultAccountApplication struct {
@@ -25,6 +26,14 @@ func (app *DefaultAccountApplication) Find(id string) (*Account, error) {
 
 func (app *DefaultAccountApplication) Save(account *Account) error {
 	return app.accountRepository.Save(account.To())
+}
+
+func (app *DefaultAccountApplication) Delete(id string) error {
+	account, err := app.accountRepository.Find(id)
+	if err != nil {
+		return err
+	}
+	return app.accountRepository.Delete(account)
 }
 
 type Account struct {

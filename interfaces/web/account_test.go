@@ -55,3 +55,8 @@ func (m *mockAccountApplication) Save(account *application.Account) error {
 	args := m.Called(account)
 	return args.Error(0)
 }
+
+func (m *mockAccountApplication) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}

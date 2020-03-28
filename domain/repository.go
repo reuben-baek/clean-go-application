@@ -3,6 +3,21 @@ package domain
 type AccountRepository interface {
 	Find(id string) (*Account, error)
 	Save(account *Account) error
+	Delete(account *Account) error
+}
+
+type ContainerRepository interface {
+	Find(id string, account *Account) (*Container, error)
+	FindByAccount(account *Account) ([]*Container, error)
+	Save(container *Container) error
+	Delete(container *Container) error
+}
+
+type ObjectRepository interface {
+	Find(id string, container *Container) (*Object, error)
+	FindByContainer(container *Container) ([]*Object, error)
+	Create(id string, container *Container) (*Object, error)
+	Delete(object *Object) error
 }
 
 type NotFoundError struct {
