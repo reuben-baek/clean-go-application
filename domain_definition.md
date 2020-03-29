@@ -22,9 +22,9 @@ func (a *Account) Id() string {
 }
 ```
 
-Account 의 속성 필드명을 외부 패키지에서 참조 가능한 Id 가 아니라 id 로 만든것에 주목하자. 이렇게 하면, 외부 패키지에서  struct type composite literal 을 이용해서 id 값을 지정한 Account 객체를 만들수 없다. ```Account{id: "reuen"}``` 은 컴파일 오류가 발생한다. 또, ```Account{}```로 객체를 만들어도 Account.id 값을 지정할 수 없다. 즉, NewAccount 생성자를 사용해야만 id 값을 지정할 수 있다.
+Account 의 속성 명을 외부 패키지에서 참조 할 수 없도록 소문자 - id 로 만들었다. Getter function 으로 Id() 를 제공한다. id 값은 한 번 만들어지면 변하지 않으므로 Setter 는 필요없다. 전통적인 OOP 에서의 클래스 캡슐화를 go 에서 구현하는 방법이다. 
 
-그럼, Account type 도 굳이 외부 패키지에 오픈할 이유는 없지 않을까? 즉, ```Account{}``` 와 같이 composite literal 로 객체를 만들 수 없도록 강제하려면 type 명을 ```type account struct{}``` 소문자로 시작하게 하면 된다. 그러나, type 은 composite literal 에서만 사용되는게 아니라 ```var reuben Account``` 와 같이 type 선언 및 type casting ``` v.(*Account)``` 에도 필요하다. 외부 패키지에서 이와 같이 사용하려면 type 명을 대문자로 시작하게 해서 외부 패키지에 오픈해야 한다. 그래서, 실용적인 선택으로 여기서는 타입명은 대문자로 시작해서 외부에 오픈하고, 속성은 소문자로 시작해서 외부에 오픈하지 않고 Getter method 를 오픈하도록 하겠다. 외부에 오픈되지 않다는 것은 Setter 가 열려져 있지 않다는 의미이다. 필요한 경우 SetId(id string) 과 같이 Setter 를 정의하겠지만, 꼭 필요한 경우에 한정해서 사용하겠다. id 는 한번 생성되면 불변이므로 Setter 를 오픈하지 않는다. 
+Account 생성자로 NewAccount(id string) 을 제공한다. 외부 패키지에서 NewAccount() 뿐 아니라 struct type composite literal - `&Account{"reuben"}` - 을 사용해서 Account 객체를 생성할 수 도 있다. 그럼, Account type 도 굳이 외부 패키지에 오픈할 이유는 없지 않을까? composite literal 로 객체를 만들 수 없도록 강제하려면 type 명을 `type account struct{}` 소문자로 시작하게 하면 된다. 그러나, type 은 composite literal 에서만 사용되는게 아니라 `var reuben Account` 와 같이 type 선언 및 type casting ` v.(*Account)` 에도 필요하다. 외부 패키지에서 이와 같이 사용하려면 type 명을 대문자로 시작하게 해서 외부 패키지에 오픈해야 한다. 그래서, 실용적인 선택으로 여기서는 타입명은 대문자로 시작해서 외부에 오픈하고, 속성은 소문자로 시작해서 외부에 오픈하지 않고 Getter 를 오픈하도록 하겠다. 필요한 경우 SetId(id string) 과 같이 Setter 를 정의하겠지만, 꼭 필요한 경우에 한정해서 사용하겠다.
 
 account_test.go 를 보자. package 를 domain_test 로 해서 외부에서 Account 를 사용하도록 했다. id 필드는 노출되어 있지 않으므로 사용하려면 컴파일 오류가 발생한다. 
 
@@ -70,14 +70,14 @@ func NewAccount(id string, name string) *Account {
 NewAccount 를 사용한 기존 코드는 컴파일 오류가 발생한다. 코드를 실행하려면, 변경된 NewAccount 에 맞게 모두 코드를 수정해야 한다.
 
 ```go
-reuben = domain.NewAccount("reuben")
+reuben = domain.NewAccount("reuben") // not enough arguments in call to domain.NewAccount
 ```
 
 반면, type compisite literal 을 이용해 객체를 생성한 아래 코드는 컴파일 오류가 발생하지 않는다. 지금 단계에서는 별 의미가 없을 수도 있지만 runtime 에 문제가 발생할 가능성이 매우 높아진다.
 
 ```go
 func TestAccount_NewWithLiteral(t *testing.T) {
-	reuben := &domain.Account{}
+	reuben := &domain.Account{"reuben"}
 	assert.Equal(t, "", reuben.Id())
 }
 ```
