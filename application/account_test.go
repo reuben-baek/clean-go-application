@@ -31,7 +31,7 @@ type AccountRepository struct {
 	mock.Mock
 }
 
-func (a *AccountRepository) Find(id string) (*domain.Account, error) {
+func (a *AccountRepository) FindOne(id string) (*domain.Account, error) {
 	panic("implement me")
 }
 

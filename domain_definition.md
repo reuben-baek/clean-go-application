@@ -283,18 +283,34 @@ func TestObject(t *testing.T) {
 }
 ```
 
-테스트 코드로 부터 우리가 정의한 object 는 군더더기 없이 깔끔하게 데이터를 읽고, 쓰는 기능을 수행한다고 할 수 있다. object 를 이렇게 정의한 것은 [오브젝트 - 코드로 이해하는 객체지향 설계](https://wikibook.co.kr/object/) 의 자율적 객체 개념에서 힌트를 얻고, [io.File](https://golang.org/pkg/os/#File) 를 참조함으로서 가능했다. 다시 한번 강조하지만, go io 패키지는 매우 유연하면서도 강력한 추상 타입을 제공한다. io stream 처리를 할때에는 반드시 정확히 io 패키지를 이해하고, 어플리케이션 전반에서 추상 타입을 사용하고 인프라스트럭처 구현체를 주입해서 사용하라!!  어플리케이션 테스트가 가능해지고, 어플리케이션 stream 처리 코드가 간결해지는 것을 확인할 수 있을 것 이다. 
+테스트 코드로 부터 우리가 정의한 object 는 군더더기 없이 깔끔하게 데이터를 읽고, 쓰는 기능을 수행한다고 할 수 있다. [오브젝트 - 코드로 이해하는 객체지향 설계](https://wikibook.co.kr/object/) 의 자율적 객체 개념에서 힌트를 얻고, [io.File](https://golang.org/pkg/os/#File) 를 벤치마킹하고, 깔끔한 테스트 코드로 부터 object model 이 깔끔하게 만들어졌다고 확신한다. 다시 한번 강조하지만, go io 패키지는 매우 유연하면서도 강력한 추상 타입을 제공한다. io stream 처리를 할때에는 반드시 정확히 io 패키지를 이해하고, 어플리케이션 전반에서 추상 타입을 사용하고 인프라스트럭처 구현체를 주입해서 사용하라!!  어플리케이션 테스트가 가능해지고, 어플리케이션 stream 처리 코드가 간결해지는 것을 확인할 수 있을 것 이다. 
 
-## AccountRepository
+## Repository
 
-이제 account 객체를 저장하는 AccountRepository 를 정의한다. AccountRepository 는 db, filesystem 등 다양한 형태로 구현될 수 있으므로 interface 로 정의한다. 구현체들은 infrastructure layer 에서 다른 패키지로 존재하게 된다.
+이제 Account, Container, Object 객체를 저장하는 domain Repository 를 정의한다. Repository 는 db, filesystem 등 다양한 형태로 구현될 수 있으므로 interface 로 정의한다. 구현체들은 infrastructure layer 에 위치한다. Repository method 들의 naming 은 JPA 스타일을 적용했다. id 로 객체를 찾는 FindOne, 조건에 맞는 객체들을 찾는 FindBy, 그리고 객체를 저장, 삭제하는 Save, Delete 메소드를 제공한다. ObjectRepository 는 특이하게 Create method 를 가지도록 했다. ObjectFactory 를 만드는 것도 고려해봤으나 ObjectRepository 구현체과 밀접한 관계가 있을 것으로 예상되기에 일단은 ObjectRepository 에 Create 책임을 부여 했다. 
 
 [domain/repository.go](https://github.com/reuben-baek/clean-go-application/blob/v0_1/domain-definition/domain/repository.go)
 
 ```go
 type AccountRepository interface {
-	Find(id string) (*Account, error)
+	FindOne(id string) (*Account, error)
 	Save(account *Account) error
+	Delete(account *Account) error
+}
+
+type ContainerRepository interface {
+	FindOne(id string, account *Account) (*Container, error)
+	FindByAccount(account *Account) ([]*Container, error)
+	Save(container *Container) error
+	Delete(container *Container) error
+}
+
+type ObjectRepository interface {
+	FindOne(id string, container *Container) (*Object, error)
+	FindByContainer(container *Container) ([]*Object, error)
+	Create(id string, container *Container) (*Object, error)
+  Save(object *Object) error
+	Delete(object *Object) error
 }
 
 type NotFoundError struct {
@@ -319,17 +335,7 @@ func (n *NotFoundError) Unwrap() error {
 }
 ```
 
-Find 메소드는 id 로 Account 를 찾지 못하는 경우에 NotFoundError 를 리턴한다. 구현체에 따라 NotFoundError 유발 오류가 다를 수 있어서 NewNotFoundError 생성자로 error 를 받도록 했다. AccountRepository 와 관련있는 에러이기 때문에 같은 소스(repository.go)에 정의한다. 
-
-
-
-## ContainerRepository
-
-
-
-## ObjectRepository
-
-
+FindOne 메소드는 id 로 해당 객체를 찾지 못하는 경우에 NotFoundError 를 리턴한다. 구현체에 따라 NotFoundError 유발 오류가 다를 수 있어서 NewNotFoundError 생성자로 error 를 받도록 했다. Repository 와 관련있는 에러이기 때문에 같은 소스(repository.go)에 정의한다. 
 
 도메인 모델 정의는 일단 끝났다. 다음 단계는 application layer 또는 infrastructure layer 구현이다. 어느 layer 나 먼저 진행해도 되고 동시에 진행 ( 팀 멤버가 두명 이상이라면 ) 해도 된다. application layer 와 infrastructure layer 는 서로 의존성이 없기 때문이다. 둘다 domain layer 에만 의존성을 가지고 있다. infrastructure layer 를 먼저 구현하면 application layer 구현시점에 테스트 코드를 infrastructure layer 에 의존하도록 할 가능성이 높기 때문에 ( Mocking 이 귀찮거나 모르거나 ) 여기서는 application layer 구현에 대해서 먼저 진행하겠다. ( 사실, 실제 코드 구현은 infrastructure layer 를 먼저했다. 안좋은 습관이긴 한데, 의존성 없도록 application layer 구현할 테니 상관은 없다. )
 
