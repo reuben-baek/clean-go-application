@@ -309,7 +309,7 @@ type ObjectRepository interface {
 	FindOne(id string, container *Container) (*Object, error)
 	FindByContainer(container *Container) ([]*Object, error)
 	Create(id string, container *Container) (*Object, error)
-  Save(object *Object) error
+	Save(object *Object) error
 	Delete(object *Object) error
 }
 
