@@ -7,7 +7,7 @@ type AccountApplication struct {
 }
 
 func (app *AccountApplication) Find(id string) (*Account, error) {
-	account, err := app.accountRepository.Find(id)
+	account, err := app.accountRepository.FindOne(id)
 	return AccountFrom(account), err
 }
 
