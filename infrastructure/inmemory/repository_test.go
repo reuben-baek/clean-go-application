@@ -10,7 +10,7 @@ func TestAccountRepository_Find_NotFound(t *testing.T) {
 	var expectedError *domain.NotFoundError
 	expectedError = domain.NewNotFoundError("cannot find reuben in inmemory.accountRepository", nil)
 	accountRepository := NewAccountRepository()
-	actual, err := accountRepository.Find("reuben")
+	actual, err := accountRepository.FindOne("reuben")
 
 	assert.Nil(t, nil, actual)
 	assert.IsType(t, expectedError, err)
@@ -23,7 +23,7 @@ func TestAccountRepository_Save_Find(t *testing.T) {
 	err := accountRepository.Save(reuben)
 	assert.Nil(t, err)
 
-	actual, err := accountRepository.Find(reuben.Id())
+	actual, err := accountRepository.FindOne(reuben.Id())
 	assert.Nil(t, err)
 	assert.Equal(t, reuben, actual)
 }

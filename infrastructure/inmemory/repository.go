@@ -23,12 +23,16 @@ type accountRepository struct {
 	storage map[string]accountDto
 }
 
+func (r *accountRepository) Delete(account *domain.Account) error {
+	panic("implement me")
+}
+
 func NewAccountRepository() *accountRepository {
 	storage := make(map[string]accountDto)
 	return &accountRepository{storage: storage}
 }
 
-func (r *accountRepository) Find(id string) (*domain.Account, error) {
+func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
 	r.rwMutex.RLock()
 	defer r.rwMutex.RUnlock()
 	if accountDto, ok := r.storage[id]; ok {

@@ -12,8 +12,8 @@ import (
 func TestAccountApplication_Find(t *testing.T) {
 	accountRepository := &accountRepository{}
 
-	accountRepository.On("Find", "reuben").Return(domain.NewAccount("reuben"), nil)
-	accountRepository.On("Find", "jimmy").Return(nil, domain.NewNotFoundError("not found", nil))
+	accountRepository.On("FindOne", "reuben").Return(domain.NewAccount("reuben"), nil)
+	accountRepository.On("FindOne", "jimmy").Return(nil, domain.NewNotFoundError("not found", nil))
 
 	accountApp := application.NewDefaultAccountApplication(accountRepository)
 
@@ -55,11 +55,11 @@ func TestAccountApplication_Save(t *testing.T) {
 func TestAccountApplication_Delete(t *testing.T) {
 	accountRepository := &accountRepository{}
 
-	accountRepository.On("Find", "reuben").Return(domain.NewAccount("reuben"), nil)
+	accountRepository.On("FindOne", "reuben").Return(domain.NewAccount("reuben"), nil)
 	accountRepository.On("Delete", domain.NewAccount("reuben")).Return(nil)
-	accountRepository.On("Find", "bob").Return(domain.NewAccount("bob"), nil)
+	accountRepository.On("FindOne", "bob").Return(domain.NewAccount("bob"), nil)
 	accountRepository.On("Delete", domain.NewAccount("bob")).Return(errors.New("unexpected error"))
-	accountRepository.On("Find", "ted").Return(nil, domain.NewNotFoundError("not found", nil))
+	accountRepository.On("FindOne", "ted").Return(nil, domain.NewNotFoundError("not found", nil))
 	accountApp := application.NewDefaultAccountApplication(accountRepository)
 
 	t.Run("success", func(t *testing.T) {
@@ -81,7 +81,7 @@ type accountRepository struct {
 	mock.Mock
 }
 
-func (r *accountRepository) Find(id string) (*domain.Account, error) {
+func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
 	args := r.Called(id)
 	if args.Get(0) != nil {
 		return args.Get(0).(*domain.Account), args.Error(1)
