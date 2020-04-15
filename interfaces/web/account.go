@@ -25,7 +25,7 @@ func (h *AccountRouter) Routes() []webserver.Route {
 
 func (h *AccountRouter) get(ctx *gin.Context) {
 	id := ctx.Param("id")
-	account, _ := h.app.Find(id)
+	account, _ := h.app.FindOne(id)
 	ctx.JSON(200, account)
 }
 

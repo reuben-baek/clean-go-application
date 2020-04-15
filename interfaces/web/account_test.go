@@ -18,7 +18,7 @@ func TestAccountRouter(t *testing.T) {
 	rootRouter := webserver.NewRootRouter(gin.Default(), accountRouter)
 
 	reuben := application.NewAccount("reuben")
-	accountApp.On("Find", "reuben").Return(reuben, nil)
+	accountApp.On("FindOne", "reuben").Return(reuben, nil)
 	accountApp.On("Save", reuben).Return(nil)
 
 	t.Run("put /reuben", func(t *testing.T) {
@@ -42,7 +42,7 @@ type mockAccountApplication struct {
 	mock.Mock
 }
 
-func (m *mockAccountApplication) Find(id string) (*application.Account, error) {
+func (m *mockAccountApplication) FindOne(id string) (*application.Account, error) {
 	args := m.Called(id)
 	if args.Get(0) != nil {
 		return args.Get(0).(*application.Account), args.Error(1)

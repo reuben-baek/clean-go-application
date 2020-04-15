@@ -3,7 +3,7 @@ package application
 import "github.com/reuben-baek/clean-go-application/domain"
 
 type AccountApplication interface {
-	Find(id string) (*Account, error)
+	FindOne(id string) (*Account, error)
 	Save(account *Account) error
 	Delete(id string) error
 }
@@ -16,7 +16,7 @@ func NewDefaultAccountApplication(accountRepository domain.AccountRepository) *D
 	return &DefaultAccountApplication{accountRepository: accountRepository}
 }
 
-func (app *DefaultAccountApplication) Find(id string) (*Account, error) {
+func (app *DefaultAccountApplication) FindOne(id string) (*Account, error) {
 	account, err := app.accountRepository.FindOne(id)
 	if err != nil {
 		return nil, err

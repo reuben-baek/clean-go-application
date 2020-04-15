@@ -1,8 +1,7 @@
-package application_test
+package application
 
 import (
 	"errors"
-	"github.com/reuben-baek/clean-go-application/application"
 	"github.com/reuben-baek/clean-go-application/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,17 +14,17 @@ func TestAccountApplication_Find(t *testing.T) {
 	accountRepository.On("FindOne", "reuben").Return(domain.NewAccount("reuben"), nil)
 	accountRepository.On("FindOne", "jimmy").Return(nil, domain.NewNotFoundError("not found", nil))
 
-	accountApp := application.NewDefaultAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository)
 
 	t.Run("found", func(t *testing.T) {
-		reuben, err := accountApp.Find("reuben")
-		expected := application.NewAccount("reuben")
+		reuben, err := accountApp.FindOne("reuben")
+		expected := NewAccount("reuben")
 		assert.Nil(t, err)
 		assert.Equal(t, expected, reuben)
 	})
 
 	t.Run("not found error", func(t *testing.T) {
-		jimmy, err := accountApp.Find("jimmy")
+		jimmy, err := accountApp.FindOne("jimmy")
 		expected := domain.NewNotFoundError("cannot find", nil)
 		assert.IsType(t, expected, err)
 		assert.Nil(t, jimmy)
@@ -37,16 +36,16 @@ func TestAccountApplication_Save(t *testing.T) {
 
 	accountRepository.On("Save", domain.NewAccount("bob")).Return(nil)
 	accountRepository.On("Save", domain.NewAccount("ted")).Return(errors.New("unexpected error"))
-	accountApp := application.NewDefaultAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository)
 
 	t.Run("success", func(t *testing.T) {
-		bob := application.NewAccount("bob")
+		bob := NewAccount("bob")
 		err := accountApp.Save(bob)
 		assert.Nil(t, err)
 	})
 
 	t.Run("error", func(t *testing.T) {
-		ted := application.NewAccount("ted")
+		ted := NewAccount("ted")
 		err := accountApp.Save(ted)
 		assert.NotNil(t, err)
 	})
@@ -60,7 +59,7 @@ func TestAccountApplication_Delete(t *testing.T) {
 	accountRepository.On("FindOne", "bob").Return(domain.NewAccount("bob"), nil)
 	accountRepository.On("Delete", domain.NewAccount("bob")).Return(errors.New("unexpected error"))
 	accountRepository.On("FindOne", "ted").Return(nil, domain.NewNotFoundError("not found", nil))
-	accountApp := application.NewDefaultAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository)
 
 	t.Run("success", func(t *testing.T) {
 		err := accountApp.Delete("reuben")
