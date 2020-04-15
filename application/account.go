@@ -3,25 +3,30 @@ package application
 import "github.com/reuben-baek/clean-go-application/domain"
 
 type AccountApplication interface {
-	FindOne(id string) (*Account, error)
+	FindOne(id string) (*AccountWithContainers, error)
 	Save(account *Account) error
 	Delete(id string) error
 }
 
 type DefaultAccountApplication struct {
-	accountRepository domain.AccountRepository
+	accountRepository   domain.AccountRepository
+	containerRepository domain.ContainerRepository
 }
 
-func NewDefaultAccountApplication(accountRepository domain.AccountRepository) *DefaultAccountApplication {
-	return &DefaultAccountApplication{accountRepository: accountRepository}
+func NewDefaultAccountApplication(accountRepository domain.AccountRepository, containerRepository domain.ContainerRepository) *DefaultAccountApplication {
+	return &DefaultAccountApplication{accountRepository: accountRepository, containerRepository: containerRepository}
 }
 
-func (app *DefaultAccountApplication) FindOne(id string) (*Account, error) {
+func (app *DefaultAccountApplication) FindOne(id string) (*AccountWithContainers, error) {
 	account, err := app.accountRepository.FindOne(id)
 	if err != nil {
 		return nil, err
 	}
-	return AccountFrom(account), nil
+	containers, err := app.containerRepository.FindByAccount(account)
+	if err != nil {
+		return nil, err
+	}
+	return AccountWithContainersFrom(account, containers), nil
 }
 
 func (app *DefaultAccountApplication) Save(account *Account) error {
@@ -50,4 +55,20 @@ func NewAccount(id string) *Account {
 
 func AccountFrom(account *domain.Account) *Account {
 	return NewAccount(account.Id())
+}
+
+type AccountWithContainers struct {
+	Account    *Account
+	Containers []*Container
+}
+
+func AccountWithContainersFrom(account *domain.Account, domainContainers []*domain.Container) *AccountWithContainers {
+	var containers []*Container
+	for _, c := range domainContainers {
+		containers = append(containers, ContainerFrom(c))
+	}
+	return &AccountWithContainers{
+		Account:    AccountFrom(account),
+		Containers: containers,
+	}
 }

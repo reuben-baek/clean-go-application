@@ -6,7 +6,7 @@ import (
 )
 
 type ContainerApplication interface {
-	FindOne(accountId string, containerId string) (*Container, error)
+	FindOne(accountId string, containerId string) (*ContainerWithObjects, error)
 	Save(container *Container) error
 	Delete(accountId string, containerId string) error
 	FindByAccount(accountId string) ([]*Container, error)
@@ -24,16 +24,33 @@ func ContainerFrom(container *domain.Container) *Container {
 	return &Container{Id: container.Id()}
 }
 
+type ContainerWithObjects struct {
+	Container *Container
+	Objects   []*Object
+}
+
+func ContainerWithObjectsFrom(container *domain.Container, domainObjects []*domain.Object) *ContainerWithObjects {
+	var objects []*Object
+	for _, object := range domainObjects {
+		objects = append(objects, ObjectFrom(object))
+	}
+	return &ContainerWithObjects{
+		Container: ContainerFrom(container),
+		Objects:   objects,
+	}
+}
+
 type DefaultContainerApplication struct {
 	accountRepository   domain.AccountRepository
 	containerRepository domain.ContainerRepository
+	objectRepository    domain.ObjectRepository
 }
 
-func NewDefaultContainerApplication(accountRepository domain.AccountRepository, containerRepository domain.ContainerRepository) *DefaultContainerApplication {
-	return &DefaultContainerApplication{accountRepository: accountRepository, containerRepository: containerRepository}
+func NewDefaultContainerApplication(accountRepository domain.AccountRepository, containerRepository domain.ContainerRepository, objectRepository domain.ObjectRepository) *DefaultContainerApplication {
+	return &DefaultContainerApplication{accountRepository: accountRepository, containerRepository: containerRepository, objectRepository: objectRepository}
 }
 
-func (d *DefaultContainerApplication) FindOne(accountId string, containerId string) (*Container, error) {
+func (d *DefaultContainerApplication) FindOne(accountId string, containerId string) (*ContainerWithObjects, error) {
 	account, err := d.accountRepository.FindOne(accountId)
 	if err != nil {
 		return nil, domain.NewNotFoundError(fmt.Sprintf("not found container '%s/%s'", accountId, containerId), err)
@@ -42,7 +59,11 @@ func (d *DefaultContainerApplication) FindOne(accountId string, containerId stri
 	if err != nil {
 		return nil, err
 	}
-	return ContainerFrom(container), nil
+	objects, err := d.objectRepository.FindByContainer(container)
+	if err != nil {
+		return nil, err
+	}
+	return ContainerWithObjectsFrom(container, objects), nil
 }
 
 func (d *DefaultContainerApplication) Save(container *Container) error {

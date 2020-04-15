@@ -23,6 +23,9 @@ func OpenObjectForWrite(id string, container *Container, writer io.Writer) *Obje
 var NotOpenForReadError = errors.New("object is not open for read")
 var NotOpenForWriteError = errors.New("object is not open for write")
 
+func (o *Object) Id() string {
+	return o.id
+}
 func (o *Object) Len() int {
 	return o.length
 }

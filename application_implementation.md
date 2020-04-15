@@ -1,4 +1,191 @@
-ContainerApplication 정의
+## AccountApplication 구현
+
+
+
+```go
+type AccountApplication interface {
+	FindOne(id string) (*AccountWithContainers, error)
+	Save(account *Account) error
+	Delete(id string) error
+}
+```
+
+
+
+```go
+type Account struct {
+	Id string
+}
+
+type AccountWithContainers struct {
+	Account *Account
+	Containers []*Container
+}
+```
+
+
+
+```go
+type DefaultAccountApplication struct {
+	accountRepository domain.AccountRepository
+	containerRepository domain.ContainerRepository
+}
+
+func NewDefaultAccountApplication(accountRepository domain.AccountRepository, containerRepository domain.ContainerRepository) *DefaultAccountApplication {
+	return &DefaultAccountApplication{accountRepository: accountRepository, containerRepository: containerRepository}
+}
+
+func (app *DefaultAccountApplication) FindOne(id string) (*AccountWithContainers, error) {
+	account, err := app.accountRepository.FindOne(id)
+	if err != nil {
+		return nil, err
+	}
+	containers, err := app.containerRepository.FindByAccount(account)
+	if err != nil {
+		return nil, err
+	}
+	return AccountWithContainersFrom(account, containers), nil
+}
+
+func (app *DefaultAccountApplication) Save(account *Account) error {
+	return app.accountRepository.Save(account.To())
+}
+
+func (app *DefaultAccountApplication) Delete(id string) error {
+	account, err := app.accountRepository.FindOne(id)
+	if err != nil {
+		return err
+	}
+	return app.accountRepository.Delete(account)
+}
+```
+
+
+
+```go
+func (a *Account) To() *domain.Account {
+	return domain.NewAccount(a.Id)
+}
+
+func NewAccount(id string) *Account {
+	return &Account{Id: id}
+}
+
+func AccountFrom(account *domain.Account) *Account {
+	return NewAccount(account.Id())
+}
+
+func AccountWithContainersFrom(account *domain.Account, domainContainers []*domain.Container) *AccountWithContainers {
+	var containers []*Container
+	for _, c := range domainContainers {
+		containers = append(containers, ContainerFrom(c))
+	}
+	return &AccountWithContainers{
+		Account:    AccountFrom(account),
+		Containers: containers,
+	}
+}
+```
+
+
+
+```go
+func TestAccountApplication_Find(t *testing.T) {
+	accountRepository := &accountRepository{}
+	containerRepository := &containerRepository{}
+
+	reuben := domain.NewAccount("reuben")
+	reubenContainers := []*domain.Container{
+		domain.NewContainer("document", reuben),
+	}
+	accountRepository.On("FindOne", "reuben").Return(reuben, nil)
+	accountRepository.On("FindOne", "jimmy").Return(nil, domain.NewNotFoundError("not found", nil))
+
+	containerRepository.On("FindByAccount", reuben).Return(reubenContainers, nil)
+	accountApp := NewDefaultAccountApplication(accountRepository, containerRepository)
+
+	t.Run("found", func(t *testing.T) {
+		reubenContainerList, err := accountApp.FindOne("reuben")
+		expected := &AccountWithContainers{
+			Account:    NewAccount("reuben"),
+			Containers: []*Container{
+				NewContainer("document"),
+			},
+		}
+		assert.Nil(t, err)
+		assert.Equal(t, expected, reubenContainerList)
+	})
+
+	t.Run("not found error", func(t *testing.T) {
+		jimmy, err := accountApp.FindOne("jimmy")
+		expected := domain.NewNotFoundError("cannot find", nil)
+		assert.IsType(t, expected, err)
+		assert.Nil(t, jimmy)
+	})
+}
+```
+
+
+
+```
+type accountRepository struct {
+	mock.Mock
+}
+
+func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
+	args := r.Called(id)
+	if args.Get(0) != nil {
+		return args.Get(0).(*domain.Account), args.Error(1)
+	} else {
+		return nil, args.Error(1)
+	}
+}
+
+func (r *accountRepository) Save(account *domain.Account) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+
+func (r *accountRepository) Delete(account *domain.Account) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+
+
+type containerRepository struct {
+	mock.Mock
+}
+
+func (r *containerRepository) FindOne(id string, account *domain.Account) (*domain.Container, error) {
+	args := r.Called(id, account)
+	if args.Get(0) != nil {
+		return args.Get(0).(*domain.Container), args.Error(1)
+	} else {
+		return nil, args.Error(1)
+	}
+}
+
+func (r *containerRepository) FindByAccount(account *domain.Account) ([]*domain.Container, error) {
+	args := r.Called(account)
+	return args.Get(0).([]*domain.Container), args.Error(1)
+}
+
+func (r *containerRepository) Save(account *domain.Container) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+
+func (r *containerRepository) Delete(account *domain.Container) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+```
+
+
+
+---
+
+## ContainerApplication 구현
 
 
 
@@ -457,5 +644,114 @@ test all
 ```
 $ go test github.com/reuben-baek/clean-go-application/application
 ok      github.com/reuben-baek/clean-go-application/application 0.346s
+```
+
+
+
+----
+
+containerApplication.FindOne 리턴타입 변경 : ContainerWithObjects
+
+```
+type ContainerApplication interface {
+	FindOne(accountId string, containerId string) (*ContainerWithObjects, error)
+	Save(container *Container) error
+	Delete(accountId string, containerId string) error
+	FindByAccount(accountId string) ([]*Container, error)
+}
+
+type ContainerWithObjects struct {
+	Container *Container
+	Objects []*Object
+}
+
+func ContainerWithObjectsFrom(container *domain.Container, domainObjects []*domain.Object) *ContainerWithObjects {
+	var objects []*Object
+	for _, object := range domainObjects {
+		objects = append(objects, ObjectFrom(object))
+	}
+	return &ContainerWithObjects{
+		Container: ContainerFrom(container),
+		Objects:   objects,
+	}
+}
+```
+
+```
+type Object struct {
+	Id string
+}
+
+func ObjectFrom(o *domain.Object) *Object {
+	return &Object{Id: o.Id()}
+}
+```
+
+
+
+```
+type DefaultContainerApplication struct {
+	accountRepository   domain.AccountRepository
+	containerRepository domain.ContainerRepository
+	objectRepository domain.ObjectRepository
+}
+```
+
+
+
+```
+func TestDefaultContainerApplication_FindOne(t *testing.T) {
+   accountRepository := &accountRepository{}
+   reuben := domain.NewAccount("reuben")
+   accountRepository.On("FindOne", "reuben").Return(reuben, nil)
+   notFoundErrorBob := domain.NewNotFoundError("not found account 'bob'", nil)
+   accountRepository.On("FindOne", "bob").Return(nil, notFoundErrorBob)
+
+   containerRepository := &containerRepository{}
+   reubenDocument := domain.NewContainer("document", reuben)
+   containerRepository.On("FindOne", "document", reuben).Return(reubenDocument, nil)
+   notFoundErrorMusic := domain.NewNotFoundError("not found container 'reuben/music'", nil)
+   containerRepository.On("FindOne", "music", reuben).Return(nil, notFoundErrorMusic)
+
+   objectRepository := &objectRepository{}
+   reubenHello := domain.OpenObjectForRead("hello.txt", reubenDocument, 0, nil)
+   objectRepository.On("FindByContainer", reubenDocument).Return([]*domain.Object{reubenHello}, nil)
+   containerApp := NewDefaultContainerApplication(accountRepository, containerRepository, objectRepository)
+
+   t.Run("success", func(t *testing.T) {
+      expected := &ContainerWithObjects{
+         Container: NewContainer("document"),
+         Objects:   []*Object{
+            &Object{Id: "hello.txt"},
+         },
+      }
+      containerWithObjects, err := containerApp.FindOne("reuben", "document")
+      assert.Nil(t, err)
+      assert.Equal(t, expected, containerWithObjects)
+   })
+```
+
+```
+
+
+func NewDefaultContainerApplication(accountRepository domain.AccountRepository, containerRepository domain.ContainerRepository, objectRepository domain.ObjectRepository) *DefaultContainerApplication {
+	return &DefaultContainerApplication{accountRepository: accountRepository, containerRepository: containerRepository, objectRepository: objectRepository}
+}
+
+func (d *DefaultContainerApplication) FindOne(accountId string, containerId string) (*ContainerWithObjects, error) {
+	account, err := d.accountRepository.FindOne(accountId)
+	if err != nil {
+		return nil, domain.NewNotFoundError(fmt.Sprintf("not found container '%s/%s'", accountId, containerId), err)
+	}
+	container, err := d.containerRepository.FindOne(containerId, account)
+	if err != nil {
+		return nil, err
+	}
+	objects, err := d.objectRepository.FindByContainer(container)
+	if err != nil {
+		return nil, err
+	}
+	return ContainerWithObjectsFrom(container, objects), nil
+}
 ```
 

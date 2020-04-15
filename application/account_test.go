@@ -10,17 +10,28 @@ import (
 
 func TestAccountApplication_Find(t *testing.T) {
 	accountRepository := &accountRepository{}
+	containerRepository := &containerRepository{}
 
-	accountRepository.On("FindOne", "reuben").Return(domain.NewAccount("reuben"), nil)
+	reuben := domain.NewAccount("reuben")
+	reubenContainers := []*domain.Container{
+		domain.NewContainer("document", reuben),
+	}
+	accountRepository.On("FindOne", "reuben").Return(reuben, nil)
 	accountRepository.On("FindOne", "jimmy").Return(nil, domain.NewNotFoundError("not found", nil))
 
-	accountApp := NewDefaultAccountApplication(accountRepository)
+	containerRepository.On("FindByAccount", reuben).Return(reubenContainers, nil)
+	accountApp := NewDefaultAccountApplication(accountRepository, containerRepository)
 
 	t.Run("found", func(t *testing.T) {
-		reuben, err := accountApp.FindOne("reuben")
-		expected := NewAccount("reuben")
+		reubenContainerList, err := accountApp.FindOne("reuben")
+		expected := &AccountWithContainers{
+			Account: NewAccount("reuben"),
+			Containers: []*Container{
+				NewContainer("document"),
+			},
+		}
 		assert.Nil(t, err)
-		assert.Equal(t, expected, reuben)
+		assert.Equal(t, expected, reubenContainerList)
 	})
 
 	t.Run("not found error", func(t *testing.T) {
@@ -33,10 +44,11 @@ func TestAccountApplication_Find(t *testing.T) {
 
 func TestAccountApplication_Save(t *testing.T) {
 	accountRepository := &accountRepository{}
+	containerRepository := &containerRepository{}
 
 	accountRepository.On("Save", domain.NewAccount("bob")).Return(nil)
 	accountRepository.On("Save", domain.NewAccount("ted")).Return(errors.New("unexpected error"))
-	accountApp := NewDefaultAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository, containerRepository)
 
 	t.Run("success", func(t *testing.T) {
 		bob := NewAccount("bob")
@@ -53,13 +65,14 @@ func TestAccountApplication_Save(t *testing.T) {
 
 func TestAccountApplication_Delete(t *testing.T) {
 	accountRepository := &accountRepository{}
+	containerRepository := &containerRepository{}
 
 	accountRepository.On("FindOne", "reuben").Return(domain.NewAccount("reuben"), nil)
 	accountRepository.On("Delete", domain.NewAccount("reuben")).Return(nil)
 	accountRepository.On("FindOne", "bob").Return(domain.NewAccount("bob"), nil)
 	accountRepository.On("Delete", domain.NewAccount("bob")).Return(errors.New("unexpected error"))
 	accountRepository.On("FindOne", "ted").Return(nil, domain.NewNotFoundError("not found", nil))
-	accountApp := NewDefaultAccountApplication(accountRepository)
+	accountApp := NewDefaultAccountApplication(accountRepository, containerRepository)
 
 	t.Run("success", func(t *testing.T) {
 		err := accountApp.Delete("reuben")
@@ -95,6 +108,34 @@ func (r *accountRepository) Save(account *domain.Account) error {
 }
 
 func (r *accountRepository) Delete(account *domain.Account) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+
+type containerRepository struct {
+	mock.Mock
+}
+
+func (r *containerRepository) FindOne(id string, account *domain.Account) (*domain.Container, error) {
+	args := r.Called(id, account)
+	if args.Get(0) != nil {
+		return args.Get(0).(*domain.Container), args.Error(1)
+	} else {
+		return nil, args.Error(1)
+	}
+}
+
+func (r *containerRepository) FindByAccount(account *domain.Account) ([]*domain.Container, error) {
+	args := r.Called(account)
+	return args.Get(0).([]*domain.Container), args.Error(1)
+}
+
+func (r *containerRepository) Save(account *domain.Container) error {
+	args := r.Called(account)
+	return args.Error(0)
+}
+
+func (r *containerRepository) Delete(account *domain.Container) error {
 	args := r.Called(account)
 	return args.Error(0)
 }
