@@ -17,7 +17,7 @@ func NewDefaultAccountApplication(accountRepository domain.AccountRepository) *D
 }
 
 func (app *DefaultAccountApplication) Find(id string) (*Account, error) {
-	account, err := app.accountRepository.Find(id)
+	account, err := app.accountRepository.FindOne(id)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (app *DefaultAccountApplication) Save(account *Account) error {
 }
 
 func (app *DefaultAccountApplication) Delete(id string) error {
-	account, err := app.accountRepository.Find(id)
+	account, err := app.accountRepository.FindOne(id)
 	if err != nil {
 		return err
 	}
