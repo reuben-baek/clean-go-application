@@ -21,11 +21,11 @@ account, container, object 에 대해 각각 create, read, update, delete 하는
 ## account
 
 ```
-PUT /:account
+PUT /:account body:account-meta
 - 신규 account를 생성한다.
 GET /:account
 - account 메타정보와 account의 container 목록을 제공한다.
-POST /:account
+POST /:account body:account-meta
 - account 메타정보를 수정한다.
 DELETE /:account
 - account를 삭제한다.
@@ -36,11 +36,11 @@ DELETE /:account
 ## container
 
 ```
-PUT /:account/:container
+PUT /:account/:container body:container-meta
 - account 에 새로운 container 를 생성한다.
 GET /:account/:container
 - container 메타정보와 container 의 object 목록을 제공한다.
-POST /:account/:container
+POST /:account/:container body:container-meta
 - container 의 메타정보를 수정한다.
 DELETE /:account/:container
 - container를 삭제한다.
@@ -51,11 +51,11 @@ DELETE /:account/:container
 ## object
 
 ```
-PUT /:account/:container/:object
+PUT /:account/:container/:object body:object-meta
 - container 에 object를 생성 또는 교체한다.
 GET /:account/:container/:object
 - object 메타정보와 object data를 제공한다.
-POST /:account/:container/:object
+POST /:account/:container/:object body:object-meta
 - object 메타정보를 수정한다.
 DELETE /:account/:container/:object
 - object를 삭제한다.

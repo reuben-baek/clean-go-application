@@ -12,18 +12,6 @@ type ContainerApplication interface {
 	FindByAccount(accountId string) ([]*Container, error)
 }
 
-type Container struct {
-	Id string
-}
-
-func NewContainer(id string) *Container {
-	return &Container{id}
-}
-
-func ContainerFrom(container *domain.Container) *Container {
-	return &Container{Id: container.Id()}
-}
-
 type ContainerWithObjects struct {
 	Container *Container
 	Objects   []*Object

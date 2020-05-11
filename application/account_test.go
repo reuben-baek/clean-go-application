@@ -24,10 +24,10 @@ func TestAccountApplication_Find(t *testing.T) {
 
 	t.Run("found", func(t *testing.T) {
 		reubenContainerList, err := accountApp.FindOne("reuben")
-		expected := &AccountWithContainers{
-			Account: NewAccount("reuben"),
-			Containers: []*Container{
-				NewContainer("document"),
+		expected := AccountWithContainers{
+			Account: Account{"reuben"},
+			Containers: []Container{
+				Container{"document"},
 			},
 		}
 		assert.Nil(t, err)
@@ -51,13 +51,13 @@ func TestAccountApplication_Save(t *testing.T) {
 	accountApp := NewDefaultAccountApplication(accountRepository, containerRepository)
 
 	t.Run("success", func(t *testing.T) {
-		bob := NewAccount("bob")
+		bob := Account{"bob"}
 		err := accountApp.Save(bob)
 		assert.Nil(t, err)
 	})
 
 	t.Run("error", func(t *testing.T) {
-		ted := NewAccount("ted")
+		ted := Account{"ted"}
 		err := accountApp.Save(ted)
 		assert.NotNil(t, err)
 	})
@@ -118,11 +118,7 @@ type containerRepository struct {
 
 func (r *containerRepository) FindOne(id string, account *domain.Account) (*domain.Container, error) {
 	args := r.Called(id, account)
-	if args.Get(0) != nil {
-		return args.Get(0).(*domain.Container), args.Error(1)
-	} else {
-		return nil, args.Error(1)
-	}
+	return args.Get(0).(*domain.Container), args.Error(1)
 }
 
 func (r *containerRepository) FindByAccount(account *domain.Account) ([]*domain.Container, error) {

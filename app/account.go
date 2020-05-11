@@ -1,4 +1,4 @@
-package application
+package app
 
 import "github.com/reuben-baek/clean-go-application/domain"
 
@@ -53,26 +53,22 @@ func NewDefaultAccountApplication(accountRepository domain.AccountRepository, co
 	return &DefaultAccountApplication{accountRepository: accountRepository, containerRepository: containerRepository}
 }
 
-func (app *DefaultAccountApplication) FindOne(id string) (AccountWithContainers, error) {
-	account, err := app.accountRepository.FindOne(id)
+func (d *DefaultAccountApplication) Find(id string) (AccountWithContainers, error) {
+	account, err := d.accountRepository.FindOne(id)
 	if err != nil {
 		return AccountWithContainers{}, err
 	}
-	containers, err := app.containerRepository.FindByAccount(account)
+	containers, err := d.containerRepository.FindByAccount(account)
 	if err != nil {
 		return AccountWithContainers{}, err
 	}
 	return AccountWithContainersFrom(account, containers), nil
 }
 
-func (app *DefaultAccountApplication) Save(account Account) error {
-	return app.accountRepository.Save(account.To())
+func (d *DefaultAccountApplication) Save(account Account) error {
+	panic("implement me")
 }
 
-func (app *DefaultAccountApplication) Delete(id string) error {
-	account, err := app.accountRepository.FindOne(id)
-	if err != nil {
-		return err
-	}
-	return app.accountRepository.Delete(account)
+func (d *DefaultAccountApplication) Delete(id string) error {
+	panic("implement me")
 }
