@@ -10,21 +10,12 @@ type accountDto struct {
 	id string
 }
 
-func fromAccount(a *domain.Account) accountDto {
+func fromAccount(a domain.Account) accountDto {
 	return accountDto{id: a.Id()}
 }
 
-func (a *accountDto) to() *domain.Account {
+func (a *accountDto) to() domain.Account {
 	return domain.NewAccount(a.id)
-}
-
-type accountRepository struct {
-	rwMutex sync.RWMutex
-	storage map[string]accountDto
-}
-
-func (r *accountRepository) Delete(account *domain.Account) error {
-	panic("implement me")
 }
 
 func NewAccountRepository() *accountRepository {
@@ -32,7 +23,12 @@ func NewAccountRepository() *accountRepository {
 	return &accountRepository{storage: storage}
 }
 
-func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
+type accountRepository struct {
+	rwMutex sync.RWMutex
+	storage map[string]accountDto
+}
+
+func (r *accountRepository) FindOne(id string) (domain.Account, error) {
 	r.rwMutex.RLock()
 	defer r.rwMutex.RUnlock()
 	if accountDto, ok := r.storage[id]; ok {
@@ -42,11 +38,15 @@ func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
 	}
 }
 
-func (r *accountRepository) Save(account *domain.Account) error {
+func (r *accountRepository) Save(account domain.Account) error {
 	r.rwMutex.Lock()
 	defer r.rwMutex.Unlock()
 
 	accountDto := fromAccount(account)
 	r.storage[accountDto.id] = accountDto
 	return nil
+}
+
+func (r *accountRepository) Delete(account domain.Account) error {
+	panic("implement me")
 }

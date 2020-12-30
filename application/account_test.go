@@ -13,7 +13,7 @@ func TestAccountApplication_Find(t *testing.T) {
 	containerRepository := &containerRepository{}
 
 	reuben := domain.NewAccount("reuben")
-	reubenContainers := []*domain.Container{
+	reubenContainers := []domain.Container{
 		domain.NewContainer("document", reuben),
 	}
 	accountRepository.On("FindOne", "reuben").Return(reuben, nil)
@@ -35,10 +35,9 @@ func TestAccountApplication_Find(t *testing.T) {
 	})
 
 	t.Run("not found error", func(t *testing.T) {
-		jimmy, err := accountApp.FindOne("jimmy")
+		_, err := accountApp.FindOne("jimmy")
 		expected := domain.NewNotFoundError("cannot find", nil)
 		assert.IsType(t, expected, err)
-		assert.Nil(t, jimmy)
 	})
 }
 
@@ -93,21 +92,21 @@ type accountRepository struct {
 	mock.Mock
 }
 
-func (r *accountRepository) FindOne(id string) (*domain.Account, error) {
+func (r *accountRepository) FindOne(id string) (domain.Account, error) {
 	args := r.Called(id)
 	if args.Get(0) != nil {
-		return args.Get(0).(*domain.Account), args.Error(1)
+		return args.Get(0).(domain.Account), args.Error(1)
 	} else {
 		return nil, args.Error(1)
 	}
 }
 
-func (r *accountRepository) Save(account *domain.Account) error {
+func (r *accountRepository) Save(account domain.Account) error {
 	args := r.Called(account)
 	return args.Error(0)
 }
 
-func (r *accountRepository) Delete(account *domain.Account) error {
+func (r *accountRepository) Delete(account domain.Account) error {
 	args := r.Called(account)
 	return args.Error(0)
 }
@@ -116,22 +115,26 @@ type containerRepository struct {
 	mock.Mock
 }
 
-func (r *containerRepository) FindOne(id string, account *domain.Account) (*domain.Container, error) {
+func (r *containerRepository) FindOne(id string, account domain.Account) (domain.Container, error) {
 	args := r.Called(id, account)
-	return args.Get(0).(*domain.Container), args.Error(1)
+	if args.Get(0) != nil {
+		return args.Get(0).(domain.Container), args.Error(1)
+	} else {
+		return nil, args.Error(1)
+	}
 }
 
-func (r *containerRepository) FindByAccount(account *domain.Account) ([]*domain.Container, error) {
+func (r *containerRepository) FindByAccount(account domain.Account) ([]domain.Container, error) {
 	args := r.Called(account)
-	return args.Get(0).([]*domain.Container), args.Error(1)
+	return args.Get(0).([]domain.Container), args.Error(1)
 }
 
-func (r *containerRepository) Save(account *domain.Container) error {
+func (r *containerRepository) Save(account domain.Container) error {
 	args := r.Called(account)
 	return args.Error(0)
 }
 
-func (r *containerRepository) Delete(account *domain.Container) error {
+func (r *containerRepository) Delete(account domain.Container) error {
 	args := r.Called(account)
 	return args.Error(0)
 }

@@ -10,7 +10,7 @@ import (
 
 func init() {
 	accountRepository := inmemory.NewAccountRepository()
-	accountApp := application.NewDefaultAccountApplication(accountRepository)
+	accountApp := application.NewDefaultAccountApplication(accountRepository, nil)
 	accountRouter := web.NewAccountRouter(accountApp)
 	webserver.Handle(accountRouter)
 

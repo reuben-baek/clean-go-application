@@ -31,7 +31,7 @@ func (h *AccountRouter) get(ctx *gin.Context) {
 
 func (h *AccountRouter) put(ctx *gin.Context) {
 	id := ctx.Param("id")
-	err := h.app.Save(application.NewAccount(id))
+	err := h.app.Save(application.Account{Id: id})
 	if err != nil {
 		ctx.String(500, fmt.Sprintf("Internal Error. %v", err))
 	} else {

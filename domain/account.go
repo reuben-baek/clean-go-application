@@ -1,13 +1,16 @@
 package domain
 
-type Account struct {
+type Account interface {
+	Id() string
+}
+type account struct {
 	id string
 }
 
-func NewAccount(id string) *Account {
-	return &Account{id: id}
+func NewAccount(id string) Account {
+	return &account{id: id}
 }
 
-func (a *Account) Id() string {
+func (a *account) Id() string {
 	return a.id
 }

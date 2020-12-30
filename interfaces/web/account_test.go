@@ -17,8 +17,12 @@ func TestAccountRouter(t *testing.T) {
 	accountRouter := NewAccountRouter(accountApp)
 	rootRouter := webserver.NewRootRouter(gin.Default(), accountRouter)
 
-	reuben := application.NewAccount("reuben")
-	accountApp.On("FindOne", "reuben").Return(reuben, nil)
+	reuben := application.Account{Id: "reuben"}
+	reubenWithContainers := application.AccountWithContainers{
+		Account:    reuben,
+		Containers: nil,
+	}
+	accountApp.On("FindOne", "reuben").Return(reubenWithContainers, nil)
 	accountApp.On("Save", reuben).Return(nil)
 
 	t.Run("put /reuben", func(t *testing.T) {
@@ -33,7 +37,7 @@ func TestAccountRouter(t *testing.T) {
 		req := httptest.NewRequest("GET", "/reuben", nil)
 		rootRouter.ServeHTTP(w, req)
 
-		expected, _ := json.Marshal(reuben)
+		expected, _ := json.Marshal(reubenWithContainers)
 		assert.Equal(t, string(expected), strings.TrimSpace(w.Body.String()))
 	})
 }
@@ -42,16 +46,12 @@ type mockAccountApplication struct {
 	mock.Mock
 }
 
-func (m *mockAccountApplication) FindOne(id string) (*application.Account, error) {
+func (m *mockAccountApplication) FindOne(id string) (application.AccountWithContainers, error) {
 	args := m.Called(id)
-	if args.Get(0) != nil {
-		return args.Get(0).(*application.Account), args.Error(1)
-	} else {
-		return nil, args.Error(1)
-	}
+	return args.Get(0).(application.AccountWithContainers), args.Error(1)
 }
 
-func (m *mockAccountApplication) Save(account *application.Account) error {
+func (m *mockAccountApplication) Save(account application.Account) error {
 	args := m.Called(account)
 	return args.Error(0)
 }

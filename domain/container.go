@@ -1,18 +1,23 @@
 package domain
 
-type Container struct {
+type Container interface {
+	Id() string
+	Account() Account
+}
+
+type container struct {
 	id      string
-	account *Account
+	account Account
 }
 
-func NewContainer(id string, account *Account) *Container {
-	return &Container{id: id, account: account}
+func NewContainer(id string, account Account) Container {
+	return &container{id: id, account: account}
 }
 
-func (c *Container) Id() string {
+func (c *container) Id() string {
 	return c.id
 }
 
-func (c *Container) Account() *Account {
+func (c *container) Account() Account {
 	return c.account
 }

@@ -6,11 +6,11 @@ type Account struct {
 	Id string
 }
 
-func (a *Account) To() *domain.Account {
+func (a *Account) To() domain.Account {
 	return domain.NewAccount(a.Id)
 }
 
-func AccountFrom(account *domain.Account) Account {
+func AccountFrom(account domain.Account) Account {
 	return Account{account.Id()}
 }
 
@@ -18,7 +18,7 @@ type Container struct {
 	Id string
 }
 
-func ContainerFrom(container *domain.Container) Container {
+func ContainerFrom(container domain.Container) Container {
 	return Container{Id: container.Id()}
 }
 
@@ -27,7 +27,7 @@ type AccountWithContainers struct {
 	Containers []Container
 }
 
-func AccountWithContainersFrom(account *domain.Account, domainContainers []*domain.Container) AccountWithContainers {
+func AccountWithContainersFrom(account domain.Account, domainContainers []domain.Container) AccountWithContainers {
 	var containers []Container
 	for _, c := range domainContainers {
 		containers = append(containers, ContainerFrom(c))
@@ -39,7 +39,7 @@ func AccountWithContainersFrom(account *domain.Account, domainContainers []*doma
 }
 
 type AccountApplication interface {
-	Find(id string) (AccountWithContainers, error)
+	FindOne(id string) (AccountWithContainers, error)
 	Save(account Account) error
 	Delete(id string) error
 }

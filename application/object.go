@@ -6,6 +6,6 @@ type Object struct {
 	Id string
 }
 
-func ObjectFrom(o *domain.Object) *Object {
-	return &Object{Id: o.Id()}
+func ObjectFrom(o domain.Object) Object {
+	return Object{Id: o.Id()}
 }
